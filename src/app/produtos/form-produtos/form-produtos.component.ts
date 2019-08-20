@@ -1,3 +1,5 @@
+import { CategoriasService } from './../../categorias/shared/categorias.service';
+import { Observable } from 'rxjs';
 import { ProdutosService } from '../shared/produtos.service';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -15,9 +17,15 @@ import { ToastrService } from 'ngx-toastr';
 export class FormProdutosComponent implements OnInit {
   formProduto: FormGroup;
   key:string;
+  categorias: Observable<any[]>;
+
+  private file:File=null;
+  imgUrl: string='';
+  filePatch: string='';
 
   constructor(private formBuilder: FormBuilder,
               private route: ActivatedRoute,
+              private CategoriasService: CategoriasService,
               private produtosService: ProdutosService,
               private toastr: ToastrService,
               private router: Router
@@ -26,6 +34,8 @@ export class FormProdutosComponent implements OnInit {
 
   ngOnInit() {
     this .criarFormulario();
+    this.categorias=this.CategoriasService.getAll();
+
     this .key = this .route.snapshot.paramMap.get('key');
         if(this .key){
 
@@ -33,15 +43,24 @@ export class FormProdutosComponent implements OnInit {
           .subscribe((produtos:any) => {
 
             produtoSubscribe.unsubscribe();
-            this .formProduto.setValue({nome: produtos.nome, descricao: produtos.descricao, preco: produtos.preco});
+            this .formProduto.setValue({
+              nome: produtos.nome,
+              descricao: produtos.descricao,
+              preco: produtos.preco,
+              categoriaKey: produtos.categoriaKey,
+              categoriaNome: produtos.categoriaNome,
+            });
+
+            this.imgUrl = produtos.img || '';
+            this.filePatch = produtos.filePatch || '';
           });
         }
       }
 
       get nome(){ return this .formProduto.get('nome'); }
       get descricao() { return this .formProduto.get('descricao'); }
-      get preco() { return this .formProduto.get('preco'); }
-
+      get categoriaKey() { return this .formProduto.get('categoriaKey'); }
+      get categoriaNome() { return this .formProduto.get('categoriaNome'); }
 
 
     criarFormulario() {
@@ -49,9 +68,40 @@ export class FormProdutosComponent implements OnInit {
       this .formProduto = this .formBuilder.group({
         nome: ['', Validators.required],
         descricao: [''],
-        preco: ['']
+        preco: [''],
+        categoriaKey:['', Validators.required],
+        categoriaNome:[''],
+        img:['']
       });
+
+      this.file =null;
+      this.imgUrl='';
+      this.filePatch='';
   }
+
+    setCategoriasNome(categorias: any){
+      if(categorias && this.formProduto.value.categoriaKey){
+        const categoriaNome = categorias[0].text;
+        this.categoriaNome.setValue(categoriaNome);
+      }else{
+        this.categoriaNome.setValue('');
+      }
+    }
+
+    upload(event: any){
+      if(event.target.files.length){
+        this.file=event.target.files[0];
+      }else{
+        this.file=null;
+      }
+    }
+
+    removeImg(){
+      this.produtosService.removeImg(this.filePatch, this.key);
+      this.imgUrl='';
+      this.filePatch='';
+    }
+
 
   onSubmit(){
     if(this .formProduto.valid) {

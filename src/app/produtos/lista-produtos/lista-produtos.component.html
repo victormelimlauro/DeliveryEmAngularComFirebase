@@ -20,7 +20,7 @@
           <th scope="row">{{produto.key}}</th>
           <td>{{ produto.nome }}</td>
           <td>{{ produto.descricao }}</td>
-          <td>{{ produto.preco }}</td>
+          <td>{{ produto.preco | currency:'BRL':true }}</td>
           <td class="edit">
             <a class="btn btn-warning text-white" role="button" [routerLink]="['/produtos/editar', produto.key]"><i class="far fa-edit"> Editar</i></a>
           </td>
